@@ -92,7 +92,11 @@ def load_data_from_cloud():
         except Exception as e:
             continue
 
-    return pd.DataFrame(all_data)
+    df_out = pd.DataFrame(all_data)
+    if not df_out.empty:
+        # Pastikan kolom Tanggal Bebas bertipe datetime
+        df_out['Tanggal Bebas'] = pd.to_datetime(df_out['Tanggal Bebas'])
+    return df_out
 
 # Header Utama Aplikasi
 st.title("⚖️ TABE - Tanggal Bebas WBP")
@@ -103,7 +107,7 @@ with st.spinner("Menarik data terbaru dari Google Sheets..."):
     df_wbp = load_data_from_cloud()
 
 if df_wbp.empty:
-    st.warning("⚠️ Data belum terbaca. Pastikan Google Sheets Anda sudah diatur ke mode publik: **'Anyone with the link can view'** (Siapa saja yang memiliki link dapat melihat).")
+    st.warning("⚠️ Data belum terbaca. Pastikan Google Sheets Anda sudah disetel ke publik (**Anyone with the link can view**).")
 else:
     df_wbp = df_wbp.sort_values(by='Tanggal Bebas').reset_index(drop=True)
 
@@ -111,8 +115,8 @@ else:
     hari_ini = datetime.date.today()
     besok = hari_ini + datetime.timedelta(days=1)
     
-    # Filter H-1 (Bebas Besok)
-    df_besok = df_wbp[df_wbp['Tanggal Bebas'] == besok]
+    # Filter H-1 (Bebas Besok) dengan konversi date aman
+    df_besok = df_wbp[df_wbp['Tanggal Bebas'].dt.date == besok]
 
     if not df_besok.empty:
         st.markdown(f"""
@@ -154,7 +158,7 @@ else:
 
     # Format Tampilan Tanggal ke DD-MM-YYYY
     display_df = filtered_df.copy()
-    display_df['Tanggal Bebas'] = pd.to_datetime(display_df['Tanggal Bebas']).dt.strftime('%d-%m-%Y')
+    display_df['Tanggal Bebas'] = display_df['Tanggal Bebas'].dt.strftime('%d-%m-%Y')
 
     st.dataframe(
         display_df[['Tanggal Bebas', 'Nama WBP & Detail', 'Kategori', 'Bulan']],
