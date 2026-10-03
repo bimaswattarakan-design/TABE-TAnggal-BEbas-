@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import urllib.parse
 
 # Konfigurasi Tampilan Halaman Web
 st.set_page_config(
@@ -35,7 +36,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ID Google Sheets Anda yang terhubung secara online
+# ID Google Sheets Anda
 SHEET_ID = "18jzU8anZEwk716AO8Dn8oT8dSxsv0EJjYqEW3EjXpG4"
 SHEET_NAMES = ["JUNI 2026", "JULI 2026 ", "AGUSTUS 2026", "SEPTEMBERR 2026", "OKTOBERR 2026 "]
 
@@ -49,7 +50,8 @@ def load_data_from_cloud():
 
     for sheet_name in SHEET_NAMES:
         clean_name = sheet_name.strip()
-        csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={clean_name}"
+        encoded_name = urllib.parse.quote(clean_name)
+        csv_url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={encoded_name}"
         
         try:
             df = pd.read_csv(csv_url, header=None)
@@ -87,7 +89,7 @@ def load_data_from_cloud():
                                             })
                                         except:
                                             pass
-        except Exception:
+        except Exception as e:
             continue
 
     return pd.DataFrame(all_data)
@@ -101,7 +103,7 @@ with st.spinner("Menarik data terbaru dari Google Sheets..."):
     df_wbp = load_data_from_cloud()
 
 if df_wbp.empty:
-    st.warning("⚠️ Data belum terbaca. Pastikan koneksi internet aktif dan format Google Sheets sesuai.")
+    st.warning("⚠️ Data belum terbaca. Pastikan Google Sheets Anda sudah diatur ke mode publik: **'Anyone with the link can view'** (Siapa saja yang memiliki link dapat melihat).")
 else:
     df_wbp = df_wbp.sort_values(by='Tanggal Bebas').reset_index(drop=True)
 
